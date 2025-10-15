@@ -5,8 +5,5 @@ document.body.innerHTML = `
   <canvas id="canvas"></canvas>
 `;
 
-
 const canvas = document.createElement("canvas");
 document.body.append(canvas);
-
-
