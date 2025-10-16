@@ -1,8 +1,6 @@
-#canvas {
+canvas {
   border: thin solid black;
   background-color: white;
-  width: 256px;
-  height: 256px;
   border-radius: 10px;
   filter: drop-shadow(4px 4px 4px #000000);
 }
