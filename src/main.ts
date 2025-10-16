@@ -7,37 +7,66 @@ document.body.innerHTML = `
 <button id="clearButton">clear</button>
 `;
 
-let isDrawing = false;
-let x = 0;
-let y = 0;
-
 const myCanvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 const ctx = myCanvas.getContext("2d") as CanvasRenderingContext2D;
 const clearButton = document.getElementById("clearButton") as HTMLCanvasElement;
 
+const redrawEvent = new Event("redraw");
+
+type Point = { x: number; y: number };
+type Line = Point[];
+const lines: Line[] = [];
+let currentLine: Line | null = null;
+
+let isDrawing = false;
+let cx = 0;
+let cy = 0;
+
+myCanvas.addEventListener("redraw", () => {
+  ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+  for (const line of lines) {
+    if (line.length > 1) {
+      ctx.beginPath();
+      const { x, y } = line[0];
+      ctx.moveTo(x, y);
+      for (const { x, y } of line) {
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+})
+
 myCanvas.addEventListener("mousedown", (e) => {
-  x = e.offsetX;
-  y = e.offsetY;
+  cx = e.offsetX;
+  cy = e.offsetY;
   isDrawing = true;
+
+  currentLine = [];
+  lines.push(currentLine);
+  currentLine.push({ x: cx, y: cy });
+
+  myCanvas.dispatchEvent(redrawEvent);
 });
 
 myCanvas.addEventListener("mousemove", (e) => {
   if (isDrawing) {
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-    x = e.offsetX;
-    y = e.offsetY;
+    cx = e.offsetX;
+    cy = e.offsetY;
+    if (currentLine) {
+      currentLine.push({ x: cx, y: cy });
+    }
+    myCanvas.dispatchEvent(redrawEvent);
   }
 });
 
 myCanvas.addEventListener("mouseup", () => {
-  if (isDrawing) {
-    isDrawing = false;
-  }
+  isDrawing = false;
+  currentLine = null;
+  myCanvas.dispatchEvent(redrawEvent);
 });
 
 clearButton.addEventListener("click", () => {
-  ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+  lines.splice(0, lines.length);
+  myCanvas.dispatchEvent(redrawEvent);
 });
