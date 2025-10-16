@@ -35,7 +35,7 @@ myCanvas.addEventListener("redraw", () => {
       ctx.stroke();
     }
   }
-})
+});
 
 myCanvas.addEventListener("mousedown", (e) => {
   cx = e.offsetX;
