@@ -4,6 +4,9 @@ document.body.innerHTML = `
 <h1>Draw Canvas</h1>
 <canvas id="myCanvas" width="256" height="256"></canvas>
 <br><br>
+<button id="thinButton">thin</button>
+<button id="thickButton">thick</button>
+<br><br>
 <button id="clearButton">clear</button>
 <button id="undoButton">undo</button>
 <button id="redoButton">redo</button>
@@ -13,10 +16,13 @@ const myCanvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 const clearButton = document.getElementById("clearButton") as HTMLCanvasElement;
 const undoButton = document.getElementById("undoButton") as HTMLCanvasElement;
 const redoButton = document.getElementById("redoButton") as HTMLCanvasElement;
+const thinButton = document.getElementById("thinButton") as HTMLCanvasElement;
+const thickButton = document.getElementById("thickButton") as HTMLCanvasElement;
 
 const redrawEvent = new Event("redraw");
 
 interface Command {
+  width: number;
   display(ctx: CanvasRenderingContext2D): void;
 }
 
@@ -24,9 +30,14 @@ const commands: Command[] = [];
 const redoCommands: Command[] = [];
 let currentLine: Array<{ x: number; y: number }> = [];
 let isDrawing = false;
+let currentWidth = 1;
 
-function createDrawLineCommand(points: Array<{ x: number; y: number }>) {
+function createDrawLineCommand(
+  points: Array<{ x: number; y: number }>,
+  width: number,
+): Command {
   return {
+    width,
     display(ctx: CanvasRenderingContext2D) {
       if (points.length === 0) return;
       ctx.beginPath();
@@ -43,9 +54,13 @@ myCanvas.addEventListener("redraw", () => {
   const ctx = myCanvas.getContext("2d")!;
   ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
   for (const cmd of commands) {
+    ctx.lineWidth = cmd.width;
     cmd.display(ctx);
   }
-  if (currentLine.length > 0) createDrawLineCommand(currentLine).display(ctx);
+  if (currentLine.length > 0) {
+    ctx.lineWidth = currentWidth;
+    createDrawLineCommand(currentLine, currentWidth).display(ctx);
+  }
 });
 
 myCanvas.addEventListener("mousedown", (e) => {
@@ -64,7 +79,7 @@ myCanvas.addEventListener("mousemove", (e) => {
 
 myCanvas.addEventListener("mouseup", () => {
   if (isDrawing) {
-    commands.push(createDrawLineCommand(currentLine));
+    commands.push(createDrawLineCommand(currentLine, currentWidth));
     currentLine = [];
     myCanvas.dispatchEvent(redrawEvent);
   }
@@ -94,4 +109,12 @@ redoButton.addEventListener("click", () => {
       myCanvas.dispatchEvent(redrawEvent);
     }
   }
+});
+
+thinButton.addEventListener("click", () => {
+  currentWidth = 1;
+});
+
+thickButton.addEventListener("click", () => {
+  currentWidth = 3;
 });
