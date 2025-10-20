@@ -4,12 +4,10 @@ document.body.innerHTML = `
 <h1>Draw Canvas</h1>
 <canvas id="myCanvas" width="256" height="256"></canvas>
 <br><br>
-<button id="thinButton">thin</button>
-<button id="thickButton">thick</button>
-<br><br>
 <button id="clearButton">clear</button>
 <button id="undoButton">undo</button>
 <button id="redoButton">redo</button>
+<br><br>
 `;
 
 const myCanvas = document.getElementById("myCanvas") as HTMLCanvasElement;
@@ -17,14 +15,45 @@ myCanvas.style.cursor = "none";
 const clearButton = document.getElementById("clearButton") as HTMLCanvasElement;
 const undoButton = document.getElementById("undoButton") as HTMLCanvasElement;
 const redoButton = document.getElementById("redoButton") as HTMLCanvasElement;
-const thinButton = document.getElementById("thinButton") as HTMLCanvasElement;
-const thickButton = document.getElementById("thickButton") as HTMLCanvasElement;
 
 const redrawEvent = new Event("redraw");
 const toolMovedEvent = new Event("tool-moved");
 
-interface Command {
+interface Marker {
+  name: string;
+  image: string;
   width: number;
+}
+
+const markers: Marker[] = [
+  {
+    name: "thin",
+    image: "‧",
+    width: 2,
+  },
+  {
+    name: "thick",
+    image: "●",
+    width: 9,
+  },
+  {
+    name: "smile",
+    image: "😀",
+    width: 0,
+  },
+  {
+    name: "heart",
+    image: "❤️",
+    width: 0,
+  },
+  {
+    name: "thumbsup",
+    image: "👍",
+    width: 0,
+  },
+];
+
+interface Command {
   display(ctx: CanvasRenderingContext2D): void;
 }
 
@@ -41,20 +70,32 @@ interface Preview {
 
 const commands: Command[] = [];
 const redoCommands: Command[] = [];
-const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: false };
+const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: true };
 let currentLine: Array<Point> = [];
 let isDrawing = false;
 let currentWidth = 2;
+let currentImage = "‧";
+
+markers.forEach((marker: Marker) => {
+  const btn = document.createElement("button");
+  btn.innerHTML = marker.image;
+  document.body.append(btn);
+  btn.addEventListener("click", () => {
+    preview.text = marker.image;
+    currentWidth = marker.width;
+    currentImage = marker.image;
+  });
+});
 
 function createDrawLineCommand(
-  points: Array<{ x: number; y: number }>,
+  points: Array<Point>,
   width: number,
 ): Command {
   return {
-    width,
     display(ctx: CanvasRenderingContext2D) {
       if (points.length === 0) return;
       ctx.beginPath();
+      ctx.lineWidth = width;
       ctx.moveTo(points[0].x, points[0].y);
       for (const point of points.slice(1)) {
         ctx.lineTo(point.x, point.y);
@@ -64,11 +105,21 @@ function createDrawLineCommand(
   };
 }
 
-function createPreview(
+function createDrawImageCommand(x: number, y: number, image: string): Command {
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.font = "24px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(image, x, y + 4);
+    },
+  };
+}
+
+function setPreview(
   preview: Preview,
 ): Command {
   return {
-    width: 0,
     display(ctx: CanvasRenderingContext2D) {
       ctx.font = "24px monospace";
       ctx.textAlign = "center";
@@ -82,7 +133,6 @@ myCanvas.addEventListener("redraw", () => {
   const ctx = myCanvas.getContext("2d")!;
   ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
   for (const cmd of commands) {
-    ctx.lineWidth = cmd.width;
     cmd.display(ctx);
   }
   if (currentLine.length > 0) {
@@ -93,18 +143,21 @@ myCanvas.addEventListener("redraw", () => {
 
 myCanvas.addEventListener("tool-moved", () => {
   const ctx = myCanvas.getContext("2d")!;
-  if (!isDrawing) {
-    createPreview(preview).display(ctx);
+  if (!isDrawing && preview.visible) {
+    setPreview(preview).display(ctx);
   }
 });
 
 myCanvas.addEventListener("mousedown", (e) => {
-  currentLine.push({ x: e.offsetX, y: e.offsetY });
-  currentLine.push({ x: e.offsetX, y: e.offsetY });
-  redoCommands.splice(0, redoCommands.length);
-  isDrawing = true;
-  preview.visible = false;
+  if (currentWidth > 0) {
+    currentLine.push({ x: e.offsetX, y: e.offsetY });
+    currentLine.push({ x: e.offsetX, y: e.offsetY });
+    redoCommands.splice(0, redoCommands.length);
+    isDrawing = true;
+    preview.visible = false;
+  }
   myCanvas.dispatchEvent(redrawEvent);
+  myCanvas.dispatchEvent(toolMovedEvent);
 });
 
 myCanvas.addEventListener("mousemove", (e) => {
@@ -118,10 +171,14 @@ myCanvas.addEventListener("mousemove", (e) => {
 });
 
 myCanvas.addEventListener("mouseup", (e) => {
-  commands.push(createDrawLineCommand(currentLine, currentWidth));
-  currentLine = [];
-
-  isDrawing = false;
+  if (currentWidth > 0) {
+    commands.push(createDrawLineCommand(currentLine, currentWidth));
+    currentLine = [];
+    isDrawing = false;
+  } else {
+    commands.push(createDrawImageCommand(e.offsetX, e.offsetY, currentImage));
+    redoCommands.splice(0, redoCommands.length);
+  }
 
   preview.visible = true;
   preview.point = { x: e.offsetX, y: e.offsetY };
@@ -151,14 +208,4 @@ redoButton.addEventListener("click", () => {
       myCanvas.dispatchEvent(redrawEvent);
     }
   }
-});
-
-thinButton.addEventListener("click", () => {
-  preview.text = "‧";
-  currentWidth = 2;
-});
-
-thickButton.addEventListener("click", () => {
-  preview.text = "●";
-  currentWidth = 9;
 });
