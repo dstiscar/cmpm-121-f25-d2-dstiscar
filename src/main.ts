@@ -89,7 +89,6 @@ myCanvas.addEventListener("redraw", () => {
     ctx.lineWidth = currentWidth;
     createDrawLineCommand(currentLine, currentWidth).display(ctx);
   }
-  
 });
 
 myCanvas.addEventListener("tool-moved", () => {
