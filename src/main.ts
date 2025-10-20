@@ -40,7 +40,7 @@ interface Preview {
 
 const commands: Command[] = [];
 const redoCommands: Command[] = [];
-const preview: Preview = {point:{x:0,y:0},text:"‧",visible:false}
+const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: false };
 let currentLine: Array<Point> = [];
 let isDrawing = false;
 let currentWidth = 4;
@@ -72,7 +72,7 @@ function createPreview(
       ctx.font = "24px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(preview.text, preview.point.x, preview.point.y+4);
+      ctx.fillText(preview.text, preview.point.x, preview.point.y + 4);
     },
   };
 }
@@ -106,9 +106,7 @@ myCanvas.addEventListener("mousemove", (e) => {
   if (isDrawing) {
     currentLine.push({ x: e.offsetX, y: e.offsetY });
   } else {
-    
-      preview.point = { x: e.offsetX, y: e.offsetY };
-    
+    preview.point = { x: e.offsetX, y: e.offsetY };
   }
   myCanvas.dispatchEvent(redrawEvent);
 });
