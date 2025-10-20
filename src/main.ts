@@ -21,6 +21,7 @@ const thinButton = document.getElementById("thinButton") as HTMLCanvasElement;
 const thickButton = document.getElementById("thickButton") as HTMLCanvasElement;
 
 const redrawEvent = new Event("redraw");
+const toolMovedEvent = new Event("tool-moved");
 
 interface Command {
   width: number;
@@ -43,7 +44,7 @@ const redoCommands: Command[] = [];
 const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: false };
 let currentLine: Array<Point> = [];
 let isDrawing = false;
-let currentWidth = 4;
+let currentWidth = 2;
 
 function createDrawLineCommand(
   points: Array<{ x: number; y: number }>,
@@ -88,7 +89,12 @@ myCanvas.addEventListener("redraw", () => {
     ctx.lineWidth = currentWidth;
     createDrawLineCommand(currentLine, currentWidth).display(ctx);
   }
-  if (!isDrawing && preview) {
+  
+});
+
+myCanvas.addEventListener("tool-moved", () => {
+  const ctx = myCanvas.getContext("2d")!;
+  if (!isDrawing) {
     createPreview(preview).display(ctx);
   }
 });
@@ -109,6 +115,7 @@ myCanvas.addEventListener("mousemove", (e) => {
     preview.point = { x: e.offsetX, y: e.offsetY };
   }
   myCanvas.dispatchEvent(redrawEvent);
+  myCanvas.dispatchEvent(toolMovedEvent);
 });
 
 myCanvas.addEventListener("mouseup", (e) => {
