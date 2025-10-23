@@ -74,17 +74,24 @@ interface Point {
 interface Preview {
   point: Point;
   text: string;
+  angle: number;
   visible: boolean;
 }
 
 const commands: Command[] = [];
 const redoCommands: Command[] = [];
-const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: true };
+const preview: Preview = {
+  point: { x: 0, y: 0 },
+  text: "‧",
+  angle: 0,
+  visible: true,
+};
 let currentLine: Array<Point> = [];
 let isDrawing = false;
 let currentWidth = 5;
 let currentImage = "‧";
 let defaultPrompt = "✏️";
+let imageAngle = 0;
 
 markers.forEach((marker: Marker) => {
   const btn = document.createElement("button");
@@ -105,8 +112,22 @@ markers.forEach((marker: Marker) => {
     preview.text = marker.image;
     currentWidth = marker.width;
     currentImage = marker.image;
+
+    myCanvas.dispatchEvent(redrawEvent);
+    myCanvas.dispatchEvent(toolMovedEvent);
   });
 });
+
+const rotateRange = document.createElement("input");
+rotateRange.type = "range";
+rotateRange.min = (0).toString();
+rotateRange.max = (360).toString();
+rotateRange.step = (22.5).toString();
+rotateRange.value = imageAngle.toString();
+document.body.append(document.createElement("br"));
+document.body.append(document.createElement("br"));
+document.body.append("Rotate")
+document.body.append(rotateRange);
 
 function createDrawLineCommand(
   points: Array<Point>,
@@ -126,13 +147,19 @@ function createDrawLineCommand(
   };
 }
 
-function createDrawImageCommand(x: number, y: number, image: string): Command {
+function createDrawImageCommand(x: number, y: number, image: string, angle: number): Command {
   return {
     display(ctx: CanvasRenderingContext2D) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((angle * Math.PI) / 180);
+
       ctx.font = "48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(image, x, y + 4);
+
+      ctx.fillText(image, 0, 0);
+      ctx.restore();
     },
   };
 }
@@ -142,10 +169,16 @@ function setPreview(
 ): Command {
   return {
     display(ctx: CanvasRenderingContext2D) {
+      ctx.save();
+      ctx.translate(preview.point.x, preview.point.y);
+      ctx.rotate((preview.angle * Math.PI) / 180);
+
       ctx.font = "48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(preview.text, preview.point.x, preview.point.y + 4);
+
+      ctx.fillText(preview.text, 0, 0);
+      ctx.restore();
     },
   };
 }
@@ -186,6 +219,7 @@ myCanvas.addEventListener("mousemove", (e) => {
     currentLine.push({ x: e.offsetX, y: e.offsetY });
   } else {
     preview.point = { x: e.offsetX, y: e.offsetY };
+    preview.angle = imageAngle;
   }
   myCanvas.dispatchEvent(redrawEvent);
   myCanvas.dispatchEvent(toolMovedEvent);
@@ -197,12 +231,13 @@ myCanvas.addEventListener("mouseup", (e) => {
     currentLine = [];
     isDrawing = false;
   } else {
-    commands.push(createDrawImageCommand(e.offsetX, e.offsetY, currentImage));
+    commands.push(createDrawImageCommand(e.offsetX, e.offsetY, currentImage, imageAngle));
     redoCommands.splice(0, redoCommands.length);
   }
 
   preview.visible = true;
   preview.point = { x: e.offsetX, y: e.offsetY };
+  preview.angle = imageAngle;
   myCanvas.dispatchEvent(redrawEvent);
 });
 
@@ -249,4 +284,14 @@ exportButton.addEventListener("click", () => {
   anchor.href = exportCanvas.toDataURL("image/png");
   anchor.download = "sketchpad.png";
   anchor.click();
+});
+
+rotateRange.addEventListener("input", (event) => {
+  const target = event.target as HTMLInputElement;
+  imageAngle = parseFloat(target.value);
+
+  preview.angle = imageAngle;
+
+  myCanvas.dispatchEvent(redrawEvent);
+  myCanvas.dispatchEvent(toolMovedEvent);
 });
