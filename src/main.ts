@@ -2,7 +2,7 @@ import "./style.css";
 
 document.body.innerHTML = `
 <h1>Draw Canvas</h1>
-<canvas id="myCanvas" width="256" height="256"></canvas>
+<canvas id="myCanvas" width="512" height="512"></canvas>
 <br><br>
 <button id="clearButton">clear</button>
 <button id="undoButton">undo</button>
@@ -33,31 +33,31 @@ const markers: Marker[] = [
   {
     name: "thin",
     image: "‧",
-    width: 2,
+    width: 5,
   },
   {
     name: "thick",
     image: "●",
-    width: 9,
+    width: 20,
   },
   {
     name: "smile",
-    image: "😀",
+    image: "😁 ",
     width: 0,
   },
   {
-    name: "heart",
-    image: "❤️",
+    name: "flower",
+    image: "🌻",
     width: 0,
   },
   {
-    name: "thumbsup",
-    image: "👍",
+    name: "sparkle",
+    image: "✨",
     width: 0,
   },
   {
     name: "custom",
-    image: "🧽",
+    image: "✏️",
     width: 0,
   },
 ];
@@ -82,8 +82,9 @@ const redoCommands: Command[] = [];
 const preview: Preview = { point: { x: 0, y: 0 }, text: "‧", visible: true };
 let currentLine: Array<Point> = [];
 let isDrawing = false;
-let currentWidth = 2;
+let currentWidth = 5;
 let currentImage = "‧";
+let defaultPrompt = "✏️";
 
 markers.forEach((marker: Marker) => {
   const btn = document.createElement("button");
@@ -95,8 +96,11 @@ markers.forEach((marker: Marker) => {
   document.body.append(btn);
   btn.addEventListener("click", () => {
     if (marker.name == "custom") {
-      const text = prompt("Custom sticker text", "🧽");
-      if (text) marker.image = text;
+      const text = prompt("Custom sticker text", defaultPrompt);
+      if (text) {
+        defaultPrompt = text;
+        marker.image = text;
+      }
     }
     preview.text = marker.image;
     currentWidth = marker.width;
@@ -125,7 +129,7 @@ function createDrawLineCommand(
 function createDrawImageCommand(x: number, y: number, image: string): Command {
   return {
     display(ctx: CanvasRenderingContext2D) {
-      ctx.font = "24px monospace";
+      ctx.font = "48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(image, x, y + 4);
@@ -138,7 +142,7 @@ function setPreview(
 ): Command {
   return {
     display(ctx: CanvasRenderingContext2D) {
-      ctx.font = "24px monospace";
+      ctx.font = "48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(preview.text, preview.point.x, preview.point.y + 4);
@@ -229,11 +233,11 @@ redoButton.addEventListener("click", () => {
 
 exportButton.addEventListener("click", () => {
   const exportCanvas = document.createElement("canvas");
-  exportCanvas.width = 1024;
-  exportCanvas.height = 1024;
+  exportCanvas.width = myCanvas.width * 2;
+  exportCanvas.height = myCanvas.height * 2;
 
   const ctx = exportCanvas.getContext("2d")!;
-  ctx.scale(4, 4);
+  ctx.scale(2, 2);
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
