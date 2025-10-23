@@ -51,6 +51,11 @@ const markers: Marker[] = [
     image: "👍",
     width: 0,
   },
+  {
+    name: "custom",
+    image: "🧽",
+    width: 0,
+  },
 ];
 
 interface Command {
@@ -78,9 +83,17 @@ let currentImage = "‧";
 
 markers.forEach((marker: Marker) => {
   const btn = document.createElement("button");
-  btn.innerHTML = marker.image;
+  if (marker.name == "custom") {
+    btn.innerHTML = "Custom";
+  } else {
+    btn.innerHTML = marker.image;
+  }
   document.body.append(btn);
   btn.addEventListener("click", () => {
+    if (marker.name == "custom") {
+      const text = prompt("Custom sticker text", "🧽");
+      if (text) marker.image = text;
+    }
     preview.text = marker.image;
     currentWidth = marker.width;
     currentImage = marker.image;
