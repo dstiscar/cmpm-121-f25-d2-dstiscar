@@ -7,6 +7,7 @@ document.body.innerHTML = `
 <button id="clearButton">clear</button>
 <button id="undoButton">undo</button>
 <button id="redoButton">redo</button>
+<button id="exportButton">export</button>
 <br><br>
 `;
 
@@ -15,6 +16,7 @@ myCanvas.style.cursor = "none";
 const clearButton = document.getElementById("clearButton") as HTMLCanvasElement;
 const undoButton = document.getElementById("undoButton") as HTMLCanvasElement;
 const redoButton = document.getElementById("redoButton") as HTMLCanvasElement;
+const exportButton = document.getElementById("exportButton") as HTMLCanvasElement;
 
 const redrawEvent = new Event("redraw");
 const toolMovedEvent = new Event("tool-moved");
@@ -221,4 +223,24 @@ redoButton.addEventListener("click", () => {
       myCanvas.dispatchEvent(redrawEvent);
     }
   }
+});
+
+exportButton.addEventListener("click", () => {
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+
+  const ctx = exportCanvas.getContext("2d")!;
+  ctx.scale(4,4);
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  for (const cmd of commands) {
+    cmd.display(ctx);
+  }
+
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
 });
