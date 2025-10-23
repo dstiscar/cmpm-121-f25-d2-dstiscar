@@ -126,7 +126,7 @@ rotateRange.step = (22.5).toString();
 rotateRange.value = imageAngle.toString();
 document.body.append(document.createElement("br"));
 document.body.append(document.createElement("br"));
-document.body.append("Rotate")
+document.body.append("Rotate");
 document.body.append(rotateRange);
 
 function createDrawLineCommand(
@@ -147,7 +147,12 @@ function createDrawLineCommand(
   };
 }
 
-function createDrawImageCommand(x: number, y: number, image: string, angle: number): Command {
+function createDrawImageCommand(
+  x: number,
+  y: number,
+  image: string,
+  angle: number,
+): Command {
   return {
     display(ctx: CanvasRenderingContext2D) {
       ctx.save();
@@ -231,7 +236,9 @@ myCanvas.addEventListener("mouseup", (e) => {
     currentLine = [];
     isDrawing = false;
   } else {
-    commands.push(createDrawImageCommand(e.offsetX, e.offsetY, currentImage, imageAngle));
+    commands.push(
+      createDrawImageCommand(e.offsetX, e.offsetY, currentImage, imageAngle),
+    );
     redoCommands.splice(0, redoCommands.length);
   }
 
